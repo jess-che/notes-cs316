@@ -134,6 +134,12 @@ CREATE TABLE StudentCourses (
 SELECT A1, A2, ... An  
 FROM R1, R2, ... Rm
 WHERE condition
+
+-- to evalute
+-- For each t1 in R1: ...
+--   For each tm in Rm:
+--     If condition is true over t1, .. tm:
+--       Output A1, ... An as a row (and do any computations for these if necessary)
 ```
 #### Fun Stuff About Select 
 * `SELECT *` means select all columns
@@ -152,7 +158,6 @@ FROM Table AS a2, Table a2
 -- AS is optional
 ```
 
-
 #### Pattern Matching
 > `s LIKE p` sees if string s matches pattern p. Patterns have special characters `%` and `_`.
 > * `%` matches any number of characters
@@ -167,9 +172,60 @@ s LIKE '_r%'   --Finds any values that have "r" in the second position.
 ***
 
 # Bag vs Set Semantics
+> **Set**  
+> No duplicates  
+> Relational model and algebra use set semantics  
+>   
+> **Bag**  
+> Duplicates allowed  
+> * more efficient because don't need to eliminate duplicates
+> * more useful because duplicate count has meaning (ex. distribution)    
+> SQL uses bag semantics by default
+
+## Bag -> Set with DISTINCT
+```SQL
+SELECT DISTINCT ...
+FROM ...
+WHERE ...
+
+-- For each t1 in R1: ...
+--   For each tm in Rm:
+--     If condition is true over t1, .. tm:
+--       Output A1, ... An as a row (and do any computations for these if necessary)
+-- If DISTINCT is present, eliminate duplicate rows in output
+```
+
+## Set Operations
+> Since `UNION, EXCEPT, INTERSECT` correspond directly to $\cup \setminus \cap$ from set theory. These are evaluated using set semantics
+> * Duplicates in input tables, if any, are first eliminated
+> *  Duplicates in result are also eliminated (for UNION)
+
+> `UNION ALL, EXCEPT ALL, INTERSECT ALL` is their bag semantic equation. Think of these as **some sort of count**
+> Let count stand for how many times a row appears in a table
+> `UNION ALL`: sum up the counts from two tables  
+> `EXCEPT ALL`: proper-subtract the two counts  
+> `INTERCECT ALL`: take the minimum of the two counts  
+
+```SQL
+-- Poke (uid1, uid2, timestamp) where uid1 is the person who pokes and uid 2 is the person who gets poked
+
+(SELECT uid1 FROM Poke)  -- select all unique people who poked
+EXCEPT
+(SELECT uid2 FROM Poke); -- select all unique people who got poked
+-- Users who poked others but never got poked by others
+
+(SELECT uid1 FROM Poke)  -- select all pokers
+EXCEPT ALL               -- as long as you were poking more then you were poked you'll appear
+(SELECT uid2 FROM Poke); -- select all people who poked
+-- Users who poked others more than others poke them
+```
+
+***
 
 # Subqueries
 > Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed
+
+***
 
 # Views
 > Temporary tables, which are constructed by the SQL language processor when it performs its job of executing queries and data modifications. These relations are then thrown away and not stored.
