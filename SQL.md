@@ -223,9 +223,52 @@ EXCEPT ALL               -- as long as you were poking more then you were poked 
 ***
 
 # Subqueries
-> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed
+> Temporary tables, which are constructed by the SQL language processor when it performs its job of executing queries and data modifications. These relations are then thrown away and not stored.
+
+## Table Subqueries 
+> when the result of a subquery is a table, you can use it anywhere you would use a table (ex. btw set operations, in FROM clause...)
+
+```SQL
+-- in FROM, then you can use alias like an other table
+SELECT ... 
+FROM (SELECT ... FROM ... Where ...) AS alias
+WHERE ...
+
+-- in SET
+(SELECT ... FROM ... Where ...)
+UNION (ALL) | EXCEPT (ALL) | INTERCECT (ALL) 
+(SELECT ... FROM ... Where ...) 
+
+-- in JOIN
+(SELECT ... FROM ... Where ...)
+JOIN
+(SELECT ... FROM ... Where ...) AS alias
+ON ...
+
+-- by giving table subqueries an alias, makes it easier to conceptualize
+```
+
+## Scalar Subqueries
+> when the result of a subquery is a scalar, you can use it anywhere you can use a scalar (such as part of a computation in SELECT, something in WHERE, HAVING...)  
+>   
+> **BE CAREFUL THOUGH**  
+> * if you aren't SELECT a key, no guarantee that it will only one row -- if returns more than one row you get runtime error
+> * even if you SELECT a key, there is a chance that there will be no rows. In that case it returns `NULL` and depending on the query, can break your query
+
+```SQL
+SELECT salesperson, amount
+FROM sales
+WHERE amount > (SELECT AVG(amount) FROM sales);
+```
+
+## IN subqueries
+> `x IN (subquery)` checks if x is in the result of subquery
+> **Scalar Check**  
+> **Tuple Check**  
+
+
 
 ***
 
 # Views
-> Temporary tables, which are constructed by the SQL language processor when it performs its job of executing queries and data modifications. These relations are then thrown away and not stored.
+> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed
