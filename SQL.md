@@ -261,12 +261,89 @@ FROM sales
 WHERE amount > (SELECT AVG(amount) FROM sales);
 ```
 
+## Correlated Subquery
+Subquery that references tuple variables in surrounding queries    
+* Because it is correlated, you have to evaluate for every new assignment of the surrounding query instead of just once
+
+> Scoping rule (aka which table a column belongs to    
+> * start with immediate query   
+> * if not found, look in the one surrounding that; repeat if necessary   
+*use table_name.column_name and AS to avoid confusion*   
+
 ## IN subqueries
-> `x IN (subquery)` checks if x is in the result of subquery
-> **Scalar Check**  
-> **Tuple Check**  
+> `x IN (subquery)` checks if x is in the result of subquery  
+> s true if and only if s is equal to one of the values in R. Likewise, s NOT IN R is true if and only if s is equal to no value in R.    
 
+## EXISTS subqueries
+> `EXITS (subquery)` checks if the result of subquery is not empty
 
+## Quantified subqueries (for all, exists)
+### Universal quantification (for all):  
+> `... WHERE x op ALL(subquery) ...` is true iff for all t in the result of subquery, x op t  
+
+### Existential quantification (exists)
+> `... WHERE x op ANY||SOME(subquery) ...` is true iff there exists some t in subquery result such that x op t  
+> * note ANY and SOME both mean exists  
+
+## Negation
+add a NOT  
+> `... WHERE NOT x op ANY||SOME||ALL(subquery) ...`  
+> > `x NOT IN||EXISTS (subquery)`  
+
+> Note that when comparing a tuple with members of a relation R, we must compare components using the assumed standard order for the attributes of R.  
+
+***
+# Aggregates
+`Count, Sum, AVG, MIN, MAX( [DISTINCT] col)` or `COUNT(*)` which counts the number of rows   
+* include DISTINCT if you want set (no dups)
+1. SUM produces the sum of a column with numerical values.  
+2. AVG produces the average of a column with numerical values.   
+3. MIN and MAX, applied to a column with numerical values, produces the smallest or largest value, respectively. When applied to a column with character-string values, they produce the lexicographically (alphabetically) first or last value, respectively  
+4. COUNT produces the number of (not necessarily distinct) values in a column. Equivalently, COUNT applied to any attribute of a relation produces the number of tuples of that relation, including duplicates.  
+
+## Grouping
+> `SELECT ... FROM ... WHERE ... GROUP BY list_of_columns;` First breaks R into groups with each group containing all tuples who have the same value in all the grouping attributes, if no grouping attributes entire R is one group. Then, for each group calculate the aggregate value  
+> number of groups = number of rows in the final output  
+
+### Restriction on Aggregated/Group By
+Every column in SELECT must either be  
+* aggregated  
+* GROUP BY col  
+Otherwise, SELECT expresion would produce MORE than ONE value per group and how would you represent that  
+
+## Having
+> `SELECT ... FROM ... WHERE ... GROUP BY ... HAVING condition;` filters group based on GROUP properties (aggregate values or GROUP BY col values)
+
+* An aggregation in a HAVING clause applies only to the tuples of the group being tested.  
+* Any attribute of relations in the FROM clause may be aggregated in the HAVING clause, but only those attributes that are in the GROUP BY list may appear unaggregated in the HAVING clause (the same rule as for the SELECT clause).  
+
+**Semantics**  
+* Compute FROM  
+* Compute WHERE   
+* Computer GROUP BY (group rows according to same values of GROUP BY columns)  
+* Compute HAVING (basically selection over groups)  
+* Compute SELECT for each group  
+ * For aggregation functions wtih DISTINCT, first elimate dups within the groups   
+
+*** 
+# Ordering  
+> `SELECT [DISTINCT] …FROM … WHERE … GROUP BY … HAVING … ORDER BY output_column [ASC|DESC], …;` sort output by values in
+> * if multiple order, sort by first first then sort the ones that were same in regards to the first sort by the second  
+> * instead of using column for sort, can also do it by their sequence number (where they appear in the SELECT)   
+> * STRICTLY SPEAKING, only OUTPUT columns can appear in ORDER BY clause   
+> * The order is by default ascending, but we can get the output highest-first by appending the keyword DESC (for “descending”) to an attribute.   
+> * not actuallly part of the aggregate stuff, could just do SELECT * FROM .. ORDER BY   
+
+**Semantics**  
+After SELECT list has been computed and optional duplicate elimination has been carried out, sort the output according to ORDER BY specification  
+
+```SQL
+-- list all users, sort by pop (desc) and name (asc)
+SELECT uid, name, age, pop
+FROM User
+ORDER BY pop DESC, name;
+-- or ORDER BY 4 DESC, 2;
+```
 
 ***
 
