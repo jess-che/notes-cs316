@@ -72,11 +72,11 @@ ALTER TABLE TableName ADD new_col new_col_type DEFAULT default_val;
 **Types of Keys**  
 *just chose which one to be your primary key, and which one to be your unique key*
 1. Primary Key: the one that is going to act as your key for your relation
-  * There is at most one primary key
-  * We like primary keys because they are sorted by these values leading to faster speedup
-3. Unique: not going to act as the key, just need to say so you get the key constraint
-  * You can have multiple unique key sets
-  * These do not provide as much speedup
+   * There is at most one primary key
+   * We like primary keys because they are sorted by these values leading to faster speedup
+2. Unique: not going to act as the key, just need to say so you get the key constraint
+   * You can have multiple unique key sets
+   * These do not provide as much speedup
 
 ```SQL
 -- one primary key with one attribute, one unique key with one attribute
