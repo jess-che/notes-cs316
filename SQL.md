@@ -411,6 +411,7 @@ SELECT * FROM User WHERE pop = pop;
 | 1         | Alice       |
 | 2         | Bob         |
 | 3         | Charlie     |
+
 **Courses**
 | StudentID | CourseName  |
 |-----------|-------------|
@@ -420,6 +421,7 @@ SELECT * FROM User WHERE pop = pop;
 
 *One way to get cross product is by putting multiple relations in WHERE*  
 `SELECT * FROM Students s, Courses c WHERE Students.StudentID = Courses.StudentID`
+
 | s.StudentID | StudentName | c.StudentID | CourseName  |
 |-------------|-------------|-------------|-------------|
 | 1           | Alice       | 1           | Math        |
@@ -434,6 +436,7 @@ includes all rows in the result of R NATURAL JOIN S and
 * dangling S rows padded with NULL's for R's columns
 
 > `(subquery/table) FULL OUTER JOIN (subquery/table) ON condition;`  
+
 | StudentID | StudentName | CourseName |
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
@@ -445,6 +448,7 @@ includes all rows in the result of R NATURAL JOIN S and
 ### Left Outerjoin
 includes all rows in the result of R NATURAL JOIN S and dangling R rows padded with NULLS  
 > `(subquery/table) LEFT OUTER JOIN (subquery/table) ON condition;`  
+
 | StudentID | StudentName | CourseName |
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
@@ -454,6 +458,7 @@ includes all rows in the result of R NATURAL JOIN S and dangling R rows padded w
 ### Right Outerjoin
 includes all rows in the result of R NATURAL JOIN S and dangling S rows padded with NULLS  
 > `(subquery/table) RIGHT OUTER JOIN (subquery/table) ON condition;`
+
 | StudentID | StudentName | CourseName |
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
@@ -463,6 +468,7 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 
 ## Theta Joins (like from RA)
 > `(subquery/table) JOIN (subquery/table) ON condition;`
+
 | StudentID | StudentName | StudentID | CourseName |
 |-----------|-------------|-----------|------------|
 | 1         | Alice       | 3         | History    |
@@ -473,6 +479,7 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 
 ## Natural Join
 > `(subquery/table) NATURAL JOIN (subquery/table;`
+
 | StudentID | StudentName | CourseName |
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
