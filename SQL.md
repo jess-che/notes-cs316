@@ -70,11 +70,11 @@ constraints are restrictions on allowable data in the data base (in addition to 
 > NOT NULL
 > Key
 > Referential Integrity (Foreign Key)
-> General Assertion  
+> General Assertion
 
-***
+## NOT NULL
+> `..., col TYPE NOT NULL, ...`
 
-# Keys
 ## Primary Keys vs Unique
 > **KEY CONSTRAINT**
 > Two tuples in R cannot agree on all of the attributes in key set, unless one of them is NULL. Any attempt to insert or update a tuple that violates this rule causes the DBMS to reject the action that caused the violation.
