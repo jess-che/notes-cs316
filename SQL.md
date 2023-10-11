@@ -288,7 +288,7 @@ Subquery that references tuple variables in surrounding queries
 ## Negation
 add a NOT  
 > `... WHERE NOT x op ANY||SOME||ALL(subquery) ...`  
-> > `x NOT IN||EXISTS (subquery)`  
+> `x NOT IN||EXISTS (subquery)`  
 
 > Note that when comparing a tuple with members of a relation R, we must compare components using the assumed standard order for the attributes of R.  
 
