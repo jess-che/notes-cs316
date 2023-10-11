@@ -263,6 +263,26 @@ WHERE condition
 * `SELECT *` means select all columns
 * SELECT can contain expressions
   * `SELECT 2023-age` will return the all values of column age subtracted from 20
+* you can also select constant values not assicated with any table it just return a result set with a single row containing that constant value
+ * use when when checking for the existence of rows or when the exact value returned isn't crucial, but the presence or absence of data is
+ * use to create a default value for join
+ ```SQL
+ CREATE VIEW GradeCount(teacher_id, grade, num) AS
+  WITH GradeRecord(id, grade) AS
+   (SELECT teacher_id, grade
+   FROM Offering, Grade
+   WHERE Offering.subject_name = Grade.subject_name
+         AND Offering.year = Grade.year)
+ (SELECT id, grade, COUNT(*) FROM GradeRecord GROUP BY id, grade)
+ UNION ALL
+ (SELECT id, grade, 0
+  FROM (SELECT DISTINCT id FROM GradeRecord) t, -- all teachers (with least one grade record)
+       (SELECT DISTINCT grade FROM Grade) g -- all possible grades
+  WHERE NOT EXISTS
+       (SELECT * FROM GradeRecord
+       WHERE id = t.id AND grade = g.grade));
+ -- rtn (teacher_id, grade, num) for every teacher_id, grade pair and set it equal to 0 if one of the groups do not exist
+ ```
  
 #### Confusing Names
 If columns from two tables share same name use `table_name.column_name` to clear up ambiguity (can do this for unique columns too, but not required)  
@@ -666,4 +686,6 @@ action;
 ***
 
 # Views
-> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed
+> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed  
+> * defined by a query which describes how to compute the view contents when needed (store the view definition query instead of contents)   
+> * kinda like temporary tables defined by WITH but are visible to ALL STATEMENTS as they ARE PART OF THE SCHEMA  
