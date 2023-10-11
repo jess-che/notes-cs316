@@ -327,6 +327,7 @@ Otherwise, SELECT expresion would produce MORE than ONE value per group and how 
  * For aggregation functions wtih DISTINCT, first elimate dups within the groups   
 
 *** 
+
 # Ordering  
 > `SELECT [DISTINCT] …FROM … WHERE … GROUP BY … HAVING … ORDER BY output_column [ASC|DESC], …;` sort output by values in
 > * if multiple order, sort by first first then sort the ones that were same in regards to the first sort by the second  
@@ -345,6 +346,137 @@ FROM User
 ORDER BY pop DESC, name;
 -- or ORDER BY 4 DESC, 2;
 ```
+
+***
+
+# Common Table Expressions (WITH)
+Defines temporary tables to be used by  
+* Other tables defined IN the SAME WITH
+* the actual_query
+
+The final result is the actual_query ONLY, nothing in the WITH is saved/returned
+
+```SQL
+WITH table1(column11, column12, …) -- column names are optional
+  AS (query_definition_1),
+ table2(column21, column22, …)     -- additional temorary tables as needed
+  AS (query_definition_2), …
+actual_query;
+```
+
+***
+
+# Unknown Values -> NULL
+Unknown values arise when we don't have info on something (unknown) or if a value is not applicable
+
+## NULL
+NULL exists for every domain/type and SQL provides special rules for dealing with NULLs
+
+### Computing
+* NULL +/-/operation... NULL||other value = NULL
+* When we compare a NULL value and any value, including another NULL, using a comparison operator like = or >, the result is UNKNOWN. The value UNKNOWN is another truth-value, like TRUE and FALSE
+ * TRUE = 1, FALSE = 0, UNKNOWN = .5
+ * x AND y = min(x, y) || x OR y = max(x,y) || NOT x = 1-x
+ * WHERE and HAVING clauses only select rows if condition is TRUE (doesn't take UNKNOWN) 
+* Aggregate functions ignore NULL, except COUNT(*) (since it counts rows)  
+* Evaluating aggregation functions (except COUNT) on an empty collection returns NULL; converting a empty collection to a scalar also gives NULL  
+
+### NULL Equivalence Breaking
+```
+SELECT AVG(pop) FROM User;
+SELECT SUM(pop)/COUNT(*) FROM User;
+-- AVG computed without NULL, COUNT(*) includes NULL
+
+SELECT * FROM User;
+SELECT * FROM User WHERE pop = pop;
+-- First includes rows where pop is NULL, since pop = pop is UNKNOWN if pop is NULL, second removes
+```
+
+### NULL Predicates and Functions
+#### IS [NOT] NULL
+> `IS NULL and IS NOT NULL` allows you to check a value is NULL bc you canpt do = NULL bc that always unknown
+
+#### Coalesce
+> `COALESCE(arg1, arg2, ...)` rtn the first arg that is NOT NULL
+
+#### NullIf
+> `NULLIF(arg1, arg2)` rtn NULL if the arguments are EQUAL
+
+***
+
+# Joins
+**Students**
+| StudentID | StudentName |
+|-----------|-------------|
+| 1         | Alice       |
+| 2         | Bob         |
+| 3         | Charlie     |
+**Courses**
+| StudentID | CourseName  |
+|-----------|-------------|
+| 1         | Math        |
+| 3         | History     |
+| 4         | Chemistry   |
+
+*One way to get cross product is by putting multiple relations in WHERE*  
+`SELECT * FROM Students s, Courses c WHERE Students.StudentID = Courses.StudentID`
+| s.StudentID | StudentName | c.StudentID | CourseName  |
+|-------------|-------------|-------------|-------------|
+| 1           | Alice       | 1           | Math        |
+| 3           | Charlie     | 3           | History     |
+
+## Outerjoin
+*to depict its the little bowtie for natural join, but wherever you are doing dangling rows add little pointy lines out*  
+
+### Full Outerjoin
+includes all rows in the result of R NATURAL JOIN S and   
+* dangling R rows (those that do not join with any S rows) padded with NULL's for S's columns
+* dangling S rows padded with NULL's for R's columns
+
+> `(subquery/table) FULL OUTER JOIN (subquery/table) ON condition;`  
+| StudentID | StudentName | CourseName |
+|-----------|-------------|------------|
+| 1         | Alice       | Math       |
+| 2         | Bob         | NULL       |
+| 3         | Charlie     | History    |
+| 4         | NULL        | Chemistry  |
+
+
+### Left Outerjoin
+includes all rows in the result of R NATURAL JOIN S and dangling R rows padded with NULLS  
+> `(subquery/table) LEFT OUTER JOIN (subquery/table) ON condition;`  
+| StudentID | StudentName | CourseName |
+|-----------|-------------|------------|
+| 1         | Alice       | Math       |
+| 3         | Charlie     | History    |
+| 4         | NULL        | Chemistry  |
+
+### Right Outerjoin
+includes all rows in the result of R NATURAL JOIN S and dangling S rows padded with NULLS  
+> `(subquery/table) RIGHT OUTER JOIN (subquery/table) ON condition;`
+| StudentID | StudentName | CourseName |
+|-----------|-------------|------------|
+| 1         | Alice       | Math       |
+| 3         | Charlie     | History    |
+| 4         | NULL        | Chemistry  |
+
+
+## Theta Joins (like from RA)
+> `(subquery/table) JOIN (subquery/table) ON condition;`
+| StudentID | StudentName | StudentID | CourseName |
+|-----------|-------------|-----------|------------|
+| 1         | Alice       | 3         | History    |
+| 1         | Alice       | 4         | Chemistry  |
+| 2         | Bob         | 3         | History    |
+| 2         | Bob         | 4         | Chemistry  |
+| 3         | Charlie     | 4         | Chemistry  |
+
+## Natural Join
+> `(subquery/table) NATURAL JOIN (subquery/table;`
+| StudentID | StudentName | CourseName |
+|-----------|-------------|------------|
+| 1         | Alice       | Math       |
+| 3         | Charlie     | History    |
 
 ***
 
