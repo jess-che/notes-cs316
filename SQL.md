@@ -73,6 +73,8 @@ constraints are restrictions on allowable data in the data base (in addition to 
 > General Assertion
 
 ## NOT NULL
+col can never contain NULL as a value
+* whenever a new row is added or an existing row is modified, the column with the NOT NULL constraint must be provided with a value
 > `..., col TYPE NOT NULL, ...`
 
 ## Primary Keys vs Unique
@@ -85,13 +87,13 @@ constraints are restrictions on allowable data in the data base (in addition to 
    If there is more than one attribute in a key set, have to do it with method 2  
 
 **Types of Keys**  
-*just chose which one to be your primary key, and which one to be your unique key*
-1. Primary Key: the one that is going to act as your key for your relation
+*just chose which one to be your primary key, and which one to be your unique key*  
+1. Primary Key: the one that is going to act as your key for your relation <- at most one per table
    * There is at most one primary key
    * We like primary keys because they are sorted by these values leading to faster speedup
-2. Unique: not going to act as the key, just need to say so you get the key constraint
-   * You can have multiple unique key sets
-   * These do not provide as much speedup
+2. Unique: not going to act as the key, just need to say so you get the key constraint <- secondary index
+   * You can have multiple unique key sets  
+   * These do not provide as much speedup  
 
 ```SQL
 -- one primary key with one attribute, one unique key with one attribute
@@ -132,7 +134,66 @@ CREATE TABLE StudentCourses (
 );
 ```
 
-## Referential Keys
+## Referential Keys  
+if R.a references S.a, and x appears in R then it must also appear in S (no dangling pointers)  
+* Referencing (R) --> Referenced (S)
+* Referenced column (S.a) must be a PRIMARY KEY
+* Referecing columns form a FOREIGN KEY
+
+> FOREIGN KEY can be declared explicitely with REFERENCES and also with just REFERENCING (if that attr is the only referenced attr in S)
+> * FOREIGN KEYs can contain duplicates (by default many-one -- same as arrow)
+> * however can also use as primary key in referencing table
+
+```SQL
+-- User has a primary key uid.
+-- Group has a primary key gid.
+-- Event has a composite primary key (eid, date).
+-- The Member table will:
+ -- Use uid as a foreign key referencing User.
+ -- Use gid as both a foreign key referencing Group and part of its own primary key.
+ -- Have a composite foreign key (eid, date) referencing the composite primary key in the Event table.
+
+CREATE TABLE Member (
+    uid INTEGER NOT NULL REFERENCES User(uid),
+    gid CHAR(10) NOT NULL,
+    eid INT NOT NULL,
+    date DATE NOT NULL,
+    PRIMARY KEY(uid, gid),
+    FOREIGN KEY (gid) REFERENCES Group(gid),
+    FOREIGN KEY (eid, date) REFERENCES Event(eid, date)
+);
+```
+
+**Enforcing Referential Integrity**  
+> happens on an insert/update to the referencing table  
+> happens on a delete/update to the referenced table
+> * this can be handled by rejecting (if it breaks a reference), cascade (update/delete all referring rows), set all references to NULL)
+
+
+### Deferred Constraint Checking + Alter Schema After
+**To Alter Schema After**   
+Add Primary Key:   
+> `ALTER TABLE [TableName] ADD CONSTRAINT PK_[TableName] PRIMARY KEY ([ColumnName]);`  
+
+Add Foreign Key:  
+> `ALTER TABLE [TableName]
+ADD CONSTRAINT FK_[TableName]_[ReferencedTableName]
+FOREIGN KEY ([Column1Name], [Column2Name]) REFERENCES [ReferencedTableName]([ReferencedColumn1Name],[ReferencedColumn2Name]);`
+
+
+**Deferred Constraint Checking**
+Checking constraints only at the end of a transaction
+
+```SQL
+-- no chicken or egg, can't insert non-atomically otherwise first insert always breaks
+CREATE TABLE Dept
+ (name CHAR(20) NOT NULL PRIMARY KEY,
+ chair CHAR(30) NOT NULL REFERENCES Prof(name));
+CREATE TABLE Prof
+ (name CHAR(30) NOT NULL PRIMARY KEY,
+ dept CHAR(20) NOT NULL REFERENCES Dept(name));
+```
+
 
 ***
 
