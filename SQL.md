@@ -308,7 +308,8 @@ add a NOT
 ### Restriction on Aggregated/Group By
 Every column in SELECT must either be  
 * aggregated  
-* GROUP BY col  
+* GROUP BY col
+
 Otherwise, SELECT expresion would produce MORE than ONE value per group and how would you represent that  
 
 ## Having
