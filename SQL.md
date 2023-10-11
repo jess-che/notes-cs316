@@ -59,6 +59,21 @@ ALTER TABLE TableName ADD new_col new_col_type DEFAULT default_val;
 ```
 
 ***
+
+# Constraints
+constraints are restrictions on allowable data in the data base (in addition to structure and type restrictions imposed by table definitions)  
+* declared as part of SCHEMA
+* enforced by the DBMS
+* ✔️ Protects data integrity (catch errors) and tells DBMS about data -> better optimization
+
+**Types**
+> NOT NULL
+> Key
+> Referential Integrity (Foreign Key)
+> General Assertion  
+
+***
+
 # Keys
 ## Primary Keys vs Unique
 > **KEY CONSTRAINT**
@@ -118,6 +133,24 @@ CREATE TABLE StudentCourses (
 ```
 
 ## Referential Keys
+
+***
+
+# Updating Table Rows
+## INSERT
+To insert one row do: `INSERT INTO Table VALUES (col1val, col2val,...);`    
+To insert the result of a query do: `INSERT INTO Table (subquery);`  
+
+## DELETE
+To delete everything from a table do: `DELETE FROM Table;`
+To delete any row that satisfies WHERE do: `DELETE FROM Table WHERE ...;`
+
+
+## UPDATE
+Update the col value in all rows do: `UPDATE Table SET coli = val;`  
+To do it for specific rows add a where clause  
+You can SET to a subquery or compute WHERE using a subquery  
+*If you are using a subquery in update, the subqueries are calculated over the OLD table*
 
 ***
 
@@ -484,17 +517,6 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
 | 3         | Charlie     | History    |
-
-***
-
-# Updating Table Rows
-## INSERT
-To insert one row do: `INSERT INTO Table VALUES (col1val, col2val,...);`    
-To insert the result of a query do: `INSERT INTO Table (subquery);`  
-
-## DELETE
-To delete everything from a table do: `DELETE FROM Table;`
-To delete any row that satisfies WHERE do: `DELETE FROM Table WHERE ...;`
 
 ***
 
