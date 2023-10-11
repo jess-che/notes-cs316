@@ -487,5 +487,16 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 
 ***
 
+# Updating Table Rows
+## INSERT
+To insert one row do: `INSERT INTO Table VALUES (col1val, col2val,...);`    
+To insert the result of a query do: `INSERT INTO Table (subquery);`  
+
+## DELETE
+To delete everything from a table do: `DELETE FROM Table;`
+To delete any row that satisfies WHERE do: `DELETE FROM Table WHERE ...;`
+
+***
+
 # Views
 > Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed
