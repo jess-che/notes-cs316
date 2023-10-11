@@ -194,6 +194,30 @@ CREATE TABLE Prof
  dept CHAR(20) NOT NULL REFERENCES Dept(name));
 ```
 
+## General Assertion and Checks
+### General Assertion <- More Hypothetical
+> `CREATE ASSERTION assertion_name CHECK assertion_condition;`
+> * assertion_condition checked for ALL modifications that could potentially violate <- lots of checking so not really supported
+
+### Checks <- less constrained way
+> on a single col: `...col TYPE CHECK(condition)`  
+> can also be done at end and reference 1/mult col: `..., CHECK(condition),...`  
+> associated with a SINGLE TABLE and only checked when tuple/attribute (of that table) is inserted/updated  
+> * true AND UNKNOWN are fine (only FALSE rejected)  
+> * notice it does not check if other table referenced are used -- so don't use with other tables  
+
+```SQL
+-- good check
+CREATE TABLE User(...
+ age INTEGER CHECK(age IS NULL OR age > 0),
+ ...);
+
+-- bad check (doesn't catch if member changed)
+CREATE TABLE Member
+ (uid INTEGER NOT NULL,
+ CHECK(uid IN (SELECT uid FROM User)),
+ ...);
+```
 
 ***
 
@@ -578,6 +602,66 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 |-----------|-------------|------------|
 | 1         | Alice       | Math       |
 | 3         | Charlie     | History    |
+
+***
+
+# Triggers
+trigger is an event-condition-action rule (if even occurs, test condition; if condition is satisfied, execute action)  
+```SQL
+CREATE TRIGGER TriggerName
+---event
+[TIMING] [EVENT]
+---trigger notation
+REFERENCING [TRANSITION VARIABLES] AS alias
+[GRANULARITY]
+---condition
+WHEN condition
+---action
+action;
+```
+#### [TIMING] - when action can be executed  
+* AFTER triggering event  
+ * Use Case: You need to perform some action after the data has been successfully modified in the table, typically in response to the change.  
+    Example: Logging changes, or updating another table based on the change in the current table.   
+* BEFORE triggering event  
+ * BEFORE are used to "condition" data or raise an error in the trigger body to abort transaction if it is no bueno  
+ * Use Case: You want to check or modify the data before it is written to the table.  
+    Example: Enforcing a business rule, such as making sure a certain field is not NULL before inserting or updating.  
+* INSTEAD OF triggering event on views  
+
+#### [EVENT] - possible events  
+* INSERT ON Table  
+* DELETE ON Table  
+* UPDATE [OF col] ON table  
+
+#### [GRANULARITY] - when trigger can be activated  
+* FOR EACH ROW modified    
+ * Use Case: You want to execute the trigger's actions for each individual row affected by the triggering statement. This is useful when the action you want to take depends on the data in each specific row.      
+   Example: Updating an audit log with the specific details of each row that was changed.     
+* FOR EACH STATEMENT that performs modification -- rtn table with all modified rows  
+ * Use Case: Take an action once per triggering SQL statement. This is useful for actions that don't depend on the specific data in each row or that depend on how many rows affected.  
+    Example: If the number of users inserted by this statement exceeds 100 and their average age is below 13, then …  
+
+> some triggers such as those that want to deal with ex how many rows satisfy condiiton are only possible at statement lvl   
+> * however row lvl triggers easier to implement and use less state (for things that don't modify too many rows)    
+
+#### [TRANSITION VARIABLES] - things SQL gives you based on event  
+* OLD ROW: the modified row before the triggering event
+* NEW ROW: the modified row after the triggering event
+* OLD TABLE: a hypothetical read-only table containing all rows to be modified before the triggering event
+* NEW TABLE: a hypothetical table containing all modified rows after the triggering event
+
+> BEFORE/AFTER INSERT row/statement lvl triggers use only NEW ROW/TABLE  
+> BEFORE/AFTER UPDATE row/statment lvl triggers use OLD and NEW ROW/TABLE
+> BEFORE/AFTER DELETE row/statement lvl trigger use only OLD ROW/TABLE
+> * row for row lvl, table for table lvl   
+
+> Be careful for recursive firing of triggers (some leave to prog, other restrict number of actions, or set maximum lvl of recursion)
+
+### Condition Checking
+* check after a BEFORE trigger (bc in trigger, could potentially fix violation)  
+* before an AFTER trigger (bc don't want to do event if constraint violate)  
+ * also AFTER triggers can cause cascaded deltes based on referential integrity constraint violoation   
 
 ***
 
