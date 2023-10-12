@@ -634,7 +634,7 @@ CREATE TRIGGER TriggerName
 ---trigger notation
 REFERENCING [TRANSITION VARIABLES] AS alias
 [GRANULARITY]
----condition
+---condition (can remove if you want to do for on)
 WHEN condition
 ---action
 action;
@@ -688,4 +688,43 @@ action;
 # Views
 > Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed  
 > * defined by a query which describes how to compute the view contents when needed (store the view definition query instead of contents)   
-> * kinda like temporary tables defined by WITH but are visible to ALL STATEMENTS as they ARE PART OF THE SCHEMA  
+> * kinda like temporary tables defined by WITH but are visible to ALL STATEMENTS as they ARE PART OF THE SCHEMA
+
+## Creation and Dropping and use
+> Creation: `CREATE VIEW Name AS (query)`
+> Drop: `DROP VIEW Name`
+* tables used in defining a view (the ones that appear in any FROM used in the view) are called "base tables"
+
+> to use, littery just put its name in the FROM clause (just like a normal table)
+> to evaluate, replace reference to view by its definition and evaulate as normal  
+
+## Modifying Views 
+One way to change things in a view is the change the corresponding thing in the base table  
+* However sometimes this is impossible
+* Also sometimes multiple ways to do a change
+```SQL
+-- changing using change in base table
+ CREATE VIEW UserPop AS
+ SELECT uid, pop FROM User;
+-- to do DELETE FROM UserPop WHERE uid = 123; do
+DELETE FROM User WHERE uid = 123;
+
+-- impossible situation
+CREATE VIEW PopularUser AS
+ SELECT uid, pop FROM User
+ WHERE pop >= 0.8;
+-- can't do INSERT INTO PopularUser VALUES(987, 0.3); bc no matter how you change User, it will never end up in PopularUser
+```
+> bc of the impossible case need to add WITH CHECK OPTION to remove wrong cases
+
+### INSTEAD OF Trigger to Modify Views
+```SQL
+CREATE TRIGGER AdjustViewName
+INSTEAD OF INSERT|DELETE|UPDATE ON ViewName  --for UPDATE can also do UPDATE [OF column] ON table
+REFERENCING OLD ROW AS o,
+            NEW ROW AS n
+FOR EACH ROW -- or statement
+-- condition or no condition
+UPDATE BaseTable SET
+ [whatever update should be]
+```
