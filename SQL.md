@@ -598,6 +598,14 @@ Fixed points are not unique
 
 💡 legal is if there is NO CYCLE with '-' edge -- stratified negation
 
+### Stratified Negation
+Stratum of a node R is the maximum number of '-' edges on any path from R in the dependency graph  
+
+Evaluation:  
+> compute tables with lowest-stratum first
+> for each stratum, use fixed-point iteration on all nodes in that stratum
+
+
 ***
 
 # Unknown Values -> NULL
