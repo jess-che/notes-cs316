@@ -502,6 +502,102 @@ WITH table1(column11, column12, …) -- column names are optional
 actual_query;
 ```
 
+## WITH Recursion
+General Structure:
+```SQL
+WITH RECURSIVE Recursive(optional col names) AS (
+    -- Base case: this selects the initial data to start the recursion
+    SELECT [InitialColumns]
+    FROM [TableName]
+    WHERE [InitialCondition]
+
+    UNION ALL
+
+    -- Recursive case: this references the Recursive to continue the recursion
+    SELECT [RecursiveColumns]
+    FROM Recursive, ...                    -- some sort of join on RECURSE (could be using from, or actual JOIN)
+    WHERE [AdditionalConditions, if any]
+);
+Query using relation defined in WITH clause
+```
+
+### Fixed Point q(T) = T
+```
+# Calculating the Unique Minimal Fixed Point if q is Monotone
+Start with an empty table: T ← ∅
+• Evaluate q over T
+• If the result is identical to T, stop; T is a fixed point
+• Otherwise, let T be the new result; repeat
+
+-- q is query and T is table that is the fixed point
+```
+> the intuition is you start off knowing nothing  
+> the base case means you deduce a starting fact  
+> in subsequent recursive steps, you use facts deduced in previous steps to learn more facts  
+> stop when no new facts can be proven
+
+## Linear Recursion
+Recursive Definition makes only one reference to itself
+```SQL
+-- Non-linear
+WITH RECURSIVE Ancestor(anc, desc) AS
+ ((SELECT parent, child FROM Parent)
+ UNION
+ (SELECT a1.anc, a2.desc
+  FROM Ancestor a1, Ancestor a2
+  WHERE a1.desc = a2.anc))
+
+--Linear
+ WITH RECURSIVE Ancestor(anc, desc) AS
+ ((SELECT parent, child FROM Parent)
+ UNION
+ (SELECT anc, child
+  FROM Ancestor, Parent
+  WHERE desc = parent))
+```
+Linear recursion easier to implement  
+* linear: you join newly generated rows with a static table
+* nonlinear: you join newly generated rows with all existing rows
+
+Non linear recursion may take fewer steps to converge but may preferm more work (end up with two different ways to derive the same thing)
+* linear: does everything one step at a time  
+* nonlinear: does multiple things -- lead to solution faster but also repetition
+
+## Mutual Recursion
+n temporary recursion tables that can all reference each other
+```SQL
+WITH RECURSIVE R1 AS Q1,...,
+     RECURSIVE Rn AS Qn
+Q;
+-- Q and Q1,…,Qn may refer to R1,…,Rn
+```
+
+### Fixed Point for Mutual Recursion
+```
+1. R1 ← ∅,…,Rn ← ∅
+2. Evaluate Q1,…,!n using the current contents of R1,...,Rn:
+ R1new <- Q1,...,Rnnew <- Qn
+3. If there exits i s.t. Rinew != Ri
+ Ri <- Rinew and repeat 2
+4. Otherwise, you found fixed point and can know calculate Q using R1,..Rn
+```
+
+## Fixed Point Nuances - Monotone/Non-monotone - Minimal
+Fixed points are not unique   
+💡 if q is MONOTONE, then all not unique fixed points must contain the fixed point we computed from fixed-point iteration starting with the empty set  
+* thus the UNIQUE MINIMAL FIXED POINT is the right answer for monotone queries
+
+> if q is non-monotone fixed points may not converge (flip flop btw numbers) or there could be multiple minimal fixed points
+
+## Recursion with Non-monotone
+### Dependency Graph
+> * one node for each table defined in WITH
+> * direct edge R->S if R is defined in terms of S
+> * label directed edge '-' if query defining R is not monotone WITH RESPECT to S
+>  * EXCEPT, NOT IN, ...
+
+💡 legal is if there is NO CYCLE with '-' edge -- stratified negation
+
 ***
 
 # Unknown Values -> NULL
@@ -625,6 +721,50 @@ includes all rows in the result of R NATURAL JOIN S and dangling S rows padded w
 
 ***
 
+# Views
+> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed  
+> * defined by a query which describes how to compute the view contents when needed (store the view definition query instead of contents)   
+> * kinda like temporary tables defined by WITH but are visible to ALL STATEMENTS as they ARE PART OF THE SCHEMA
+
+## Creation and Dropping and use
+> Creation: `CREATE VIEW Name AS (query)`
+> Drop: `DROP VIEW Name`
+* tables used in defining a view (the ones that appear in any FROM used in the view) are called "base tables"
+
+> to use, littery just put its name in the FROM clause (just like a normal table)
+> to evaluate, replace reference to view by its definition and evaulate as normal  
+
+## Modifying Views 
+One way to change things in a view is the change the corresponding thing in the base table  
+* However sometimes this is impossible
+* Also sometimes multiple ways to do a change
+```SQL
+-- changing using change in base table
+ CREATE VIEW UserPop AS
+ SELECT uid, pop FROM User;
+-- to do DELETE FROM UserPop WHERE uid = 123; do
+DELETE FROM User WHERE uid = 123;
+
+-- impossible situation
+CREATE VIEW PopularUser AS
+ SELECT uid, pop FROM User
+ WHERE pop >= 0.8;
+-- can't do INSERT INTO PopularUser VALUES(987, 0.3); bc no matter how you change User, it will never end up in PopularUser
+```
+> bc of the impossible case need to add WITH CHECK OPTION to remove wrong cases
+
+### INSTEAD OF Trigger to Modify Views
+```SQL
+CREATE TRIGGER TrigerName
+INSTEAD OF INSERT|DELETE|UPDATE ON ViewName  --for UPDATE can also do UPDATE [OF column] ON table
+REFERENCING [TRANSITION VARIABLES] AS alias
+FOR EACH ROW|STATEMENT
+-- condition or no condition
+UPDATE BaseTable SET
+ [whatever update should be]
+```
+***
+
 # Triggers
 trigger is an event-condition-action rule (if even occurs, test condition; if condition is satisfied, execute action)  
 ```SQL
@@ -683,48 +823,5 @@ action;
 * before an AFTER trigger (bc don't want to do event if constraint violate)  
  * also AFTER triggers can cause cascaded deltes based on referential integrity constraint violoation   
 
-***
 
-# Views
-> Views, which are relations defined by a computation. These relations are not stored, but are constructed, in whole or in part, when needed  
-> * defined by a query which describes how to compute the view contents when needed (store the view definition query instead of contents)   
-> * kinda like temporary tables defined by WITH but are visible to ALL STATEMENTS as they ARE PART OF THE SCHEMA
 
-## Creation and Dropping and use
-> Creation: `CREATE VIEW Name AS (query)`
-> Drop: `DROP VIEW Name`
-* tables used in defining a view (the ones that appear in any FROM used in the view) are called "base tables"
-
-> to use, littery just put its name in the FROM clause (just like a normal table)
-> to evaluate, replace reference to view by its definition and evaulate as normal  
-
-## Modifying Views 
-One way to change things in a view is the change the corresponding thing in the base table  
-* However sometimes this is impossible
-* Also sometimes multiple ways to do a change
-```SQL
--- changing using change in base table
- CREATE VIEW UserPop AS
- SELECT uid, pop FROM User;
--- to do DELETE FROM UserPop WHERE uid = 123; do
-DELETE FROM User WHERE uid = 123;
-
--- impossible situation
-CREATE VIEW PopularUser AS
- SELECT uid, pop FROM User
- WHERE pop >= 0.8;
--- can't do INSERT INTO PopularUser VALUES(987, 0.3); bc no matter how you change User, it will never end up in PopularUser
-```
-> bc of the impossible case need to add WITH CHECK OPTION to remove wrong cases
-
-### INSTEAD OF Trigger to Modify Views
-```SQL
-CREATE TRIGGER AdjustViewName
-INSTEAD OF INSERT|DELETE|UPDATE ON ViewName  --for UPDATE can also do UPDATE [OF column] ON table
-REFERENCING OLD ROW AS o,
-            NEW ROW AS n
-FOR EACH ROW -- or statement
--- condition or no condition
-UPDATE BaseTable SET
- [whatever update should be]
-```
